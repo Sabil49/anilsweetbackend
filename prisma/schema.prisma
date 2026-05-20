@@ -1,0 +1,121 @@
+// This is a reference Prisma schema for the standalone backend
+// Generated for: Anilsweets Corner - Payment & Order Management
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// User account
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  firstName String?
+  lastName  String?
+  phone     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  addresses Address[]
+  orders    Order[]
+}
+
+// Shipping address
+model Address {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  fullName    String
+  phone       String
+  addressLine1 String
+  addressLine2 String?
+  city        String
+  state       String
+  zipCode     String
+  country     String  @default("India")
+  isDefault   Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  orders Order[]
+
+  @@index([userId])
+}
+
+// Order
+model Order {
+  id        String   @id @default(cuid())
+  orderNumber String @unique
+
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  
+  addressId String
+  address   Address  @relation(fields: [addressId], references: [id], onDelete: Cascade)
+
+  userEmail  String?
+  userName   String?
+
+  // Pricing
+  subtotal    Float   @default(0)
+  shippingCost Float  @default(0)
+  tax         Float   @default(0)
+  total       Float   @default(0)
+
+  // Order details
+  status      OrderStatus @default(PLACED)
+  paymentStatus PaymentStatus @default(PENDING)
+  paymentMethod String? @default("DODO")
+
+  // Dodo payment tracking
+  razorpayOrderId String? // Session ID from Dodo
+  razorpayPaymentId String?
+
+  items OrderItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([addressId])
+  @@index([paymentStatus])
+}
+
+enum OrderStatus {
+  PLACED
+  CONFIRMED
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  FAILED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+// Order item (product in order)
+model OrderItem {
+  id        String   @id @default(cuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  productId String
+  productName String?
+  quantity  Int
+  price     Float    // Price per unit at time of order
+
+  createdAt DateTime @default(now())
+
+  @@index([orderId])
+}
