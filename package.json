@@ -3,8 +3,12 @@
   "version": "1.0.0",
   "description": "Anilsweets Corner - Backend API for payments and orders",
   "private": true,
+  "prisma": {
+    "schema": "lib/prisma/schema.prisma"
+  },
   "scripts": {
     "dev": "next dev",
+    "prebuild": "prisma generate",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
