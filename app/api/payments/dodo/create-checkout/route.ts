@@ -232,6 +232,7 @@ export async function POST(request: NextRequest) {
         name: customerName,
       },
       return_url: returnUrl,
+      currency: 'INR',
       metadata: {
         order_id: order.id,
         order_number: order.orderNumber ?? '',
