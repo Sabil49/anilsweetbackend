@@ -74,13 +74,29 @@ export async function POST(request: NextRequest) {
         const created = await prisma.$transaction(async (tx) => {
           let addressId: string | undefined;
 
+          // Ensure user exists in PostgreSQL before creating address
+          let userId = createData.userId;
+          if (userId) {
+            const user = await tx.user.upsert({
+              where: { id: userId },
+              update: {
+                email: createData.userEmail || '',
+              },
+              create: {
+                id: userId,
+                email: createData.userEmail || '',
+              },
+            });
+            userId = user.id;
+          }
+
           if (createData.address) {
-            if (!createData.userId) {
+            if (!userId) {
               throw new Error('Missing userId for provided address');
             }
             const addr = await tx.address.create({
               data: {
-                userId: createData.userId,
+                userId,
                 fullName: createData.address.fullName,
                 phone: createData.address.phone,
                 addressLine1: createData.address.addressLine1,
@@ -93,10 +109,10 @@ export async function POST(request: NextRequest) {
               },
             });
             addressId = addr.id;
-          } else if (createData.userId) {
+          } else if (userId) {
             // try to find a default address for the user
             const existing = await tx.address.findFirst({
-              where: { userId: createData.userId, isDefault: true },
+              where: { userId, isDefault: true },
             });
             if (existing) addressId = existing.id;
           }
