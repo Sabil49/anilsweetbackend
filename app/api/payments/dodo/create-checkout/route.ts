@@ -181,9 +181,10 @@ export async function POST(request: NextRequest) {
         ? (order.total as { toNumber(): number }).toNumber()
         : Number(order.total);
 
-    // For Dodo API with INR currency, send amount as-is (no * 100)
-    const amount = Math.round(totalNumber);
-    if (!amount || amount <= 0) {
+    // Dodo expects amounts in the smallest currency unit (paise for INR).
+    // Convert rupees to paise by multiplying by 100.
+    const amountCents = Math.round(totalNumber * 100);
+    if (!amountCents || amountCents <= 0) {
       return NextResponse.json({ error: 'Invalid order amount' }, { status: 400 });
     }
 
@@ -225,7 +226,7 @@ export async function POST(request: NextRequest) {
         {
           product_id: DODO_PRODUCT_ID,
           quantity: 1,
-          amount: amount,
+          amount: amountCents,
         },
       ],
       customer: {
@@ -238,14 +239,14 @@ export async function POST(request: NextRequest) {
         order_id: order.id,
         order_number: order.orderNumber ?? '',
         user_id: order.userId ?? '',
-        amount: amount.toString(),
+        amount: amountCents.toString(),
       },
     };
 
     // ── 5. Create checkout session ───────────────────────────────────────
     const apiUrl = `${DODO_API_BASE}/checkouts`;
     const maskedKey = `${DODO_API_KEY?.slice(0, 4)}...${DODO_API_KEY?.slice(-4)}`;
-    console.log('[DODO] Creating checkout session', { apiUrl, environment: DODO_ENVIRONMENT, productId: DODO_PRODUCT_ID, keyHint: maskedKey, amount });
+    console.log('[DODO] Creating checkout session', { apiUrl, environment: DODO_ENVIRONMENT, productId: DODO_PRODUCT_ID, keyHint: maskedKey, amountCents, totalNumber });
 
     let dodoResponse: Response;
     try {
