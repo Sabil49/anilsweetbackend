@@ -16,12 +16,25 @@ export async function POST(request: NextRequest) {
 
     // ── 1. Try to load existing order if orderId is provided ───────────────
     let order: any = null;
-    const { orderId } = body;
+    const { orderId, orderNumber } = body;
 
-    // Only try to load if orderId looks like a CUID
+    // First try to load existing backend order by CUID id.
     if (orderId && typeof orderId === 'string' && /^c[a-z0-9]{24}$/.test(orderId)) {
       order = await prisma.order.findUnique({
         where: { id: orderId },
+        include: {
+          user: {
+            select: { email: true, firstName: true, lastName: true },
+          },
+          items: true,
+        },
+      });
+    }
+
+    // If the client is sending a non-CUID order reference, fall back to orderNumber.
+    if (!order && orderNumber && typeof orderNumber === 'string') {
+      order = await prisma.order.findUnique({
+        where: { orderNumber },
         include: {
           user: {
             select: { email: true, firstName: true, lastName: true },
@@ -73,6 +86,16 @@ export async function POST(request: NextRequest) {
         // Transactionally create address (if provided) and order + items
         const created = await prisma.$transaction(async (tx) => {
           let addressId: string | undefined;
+
+          if (createData.orderNumber) {
+            const existingOrderByNumber = await tx.order.findUnique({
+              where: { orderNumber: createData.orderNumber },
+              include: { items: true },
+            });
+            if (existingOrderByNumber) {
+              return existingOrderByNumber;
+            }
+          }
 
           // Ensure user exists in PostgreSQL before creating address
           let userId = createData.userId;
@@ -159,8 +182,8 @@ export async function POST(request: NextRequest) {
         if (err instanceof z.ZodError) {
           return NextResponse.json({ error: 'Order creation validation failed', details: err.errors }, { status: 400 });
         }
-        console.error('[ORDER CREATE] error:', err?.message ?? err);
-        return NextResponse.json({ error: 'Order not found' }, { status: 404 });
+        console.error('[ORDER CREATE] error:', err?.message ?? err, 'body:', body);
+        return NextResponse.json({ error: 'Order creation failed', details: err?.message ?? String(err) }, { status: 500 });
       }
     }
 
