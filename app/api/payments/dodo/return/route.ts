@@ -35,10 +35,21 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Redirect to the existing order success page
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-    const redirectUrl = `${baseUrl}/order-success?orderId=${orderId}`;
-    return NextResponse.redirect(redirectUrl);
+    // Redirect to the app via deep link. If the app is not installed,
+    // show a fallback page with instructions.
+    const deepLink = `aniilsweets://order-success?orderId=${encodeURIComponent(orderId)}`;
+    return new Response(`<!DOCTYPE html><html><head><meta charset="utf-8"/><title>Return to App</title></head><body style="font-family: sans-serif; text-align: center; padding: 2rem;">
+      <h1>Returning to Anil Sweets Corner</h1>
+      <p>If you are not redirected automatically, <a href="${deepLink}">tap here to open the app</a>.</p>
+      <script>
+        window.location = '${deepLink}';
+        setTimeout(function() {
+          document.body.innerHTML = '<h1>Open the app to complete your order</h1><p>If nothing happened, please open the Anil Sweets Corner app manually.</p>';
+        }, 1500);
+      </script>
+    </body></html>`, {
+      headers: { 'Content-Type': 'text/html' },
+    });
   } catch (error) {
     console.error('[DODO RETURN] Error:', error);
     return NextResponse.json(
