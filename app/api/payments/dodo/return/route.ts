@@ -35,9 +35,9 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Redirect to success page
+    // Redirect to the existing order success page
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-    const redirectUrl = `${baseUrl}/checkout/success?orderId=${orderId}`;
+    const redirectUrl = `${baseUrl}/order-success?orderId=${orderId}`;
     return NextResponse.redirect(redirectUrl);
   } catch (error) {
     console.error('[DODO RETURN] Error:', error);
