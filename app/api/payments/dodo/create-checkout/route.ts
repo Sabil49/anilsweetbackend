@@ -213,7 +213,7 @@ export async function POST(request: NextRequest) {
 
     // ── 3. Config ─────────────────────────────────────────────────────────
     const DODO_ENVIRONMENT = (process.env.DODO_ENVIRONMENT || 'test').toLowerCase();
-    const DODO_PRODUCT_ID = process.env.DODO_PRODUCT_ID || 'pdt_0NXgG1Abo7Esjd8sBznXB';
+    const DODO_PRODUCT_ID = process.env.DODO_PRODUCT_ID || 'pdt_0NXlidWhtXLoHiO2PwrTI';
     const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
 
     const DODO_LIVE_SECRET = process.env.DODO_LIVE_SECRET;
