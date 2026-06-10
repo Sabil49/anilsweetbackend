@@ -100,17 +100,24 @@ export async function POST(request: NextRequest) {
           // Ensure user exists in PostgreSQL before creating address
           let userId = createData.userId;
           if (userId) {
-            const user = await tx.user.upsert({
-              where: { id: userId },
-              update: {
-                email: createData.userEmail || '',
-              },
-              create: {
-                id: userId,
-                email: createData.userEmail || '',
-              },
-            });
-            userId = user.id;
+            const userEmail = createData.userEmail?.trim();
+            if (userEmail) {
+              const user = await tx.user.upsert({
+                where: { id: userId },
+                update: { email: userEmail },
+                create: { id: userId, email: userEmail },
+              });
+              userId = user.id;
+            } else {
+              const existingUser = await tx.user.findUnique({
+                where: { id: userId },
+              });
+              if (!existingUser) {
+                await tx.user.create({
+                  data: { id: userId, email: `${userId}@anilsweet.local` },
+                });
+              }
+            }
           }
 
           if (createData.address) {

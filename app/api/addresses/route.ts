@@ -42,6 +42,7 @@ export async function POST(request: NextRequest) {
 
     const createAddressSchema = z.object({
       userId: z.string().min(1),
+      userEmail: z.string().email().optional(),
       fullName: z.string().min(1),
       phone: z.string().min(1),
       address: z.string().min(1), // addressLine1
@@ -63,15 +64,21 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Create or get user first (in case user doesn't exist in backend yet)
-    let user = await prisma.user.findUnique({
-      where: { id: data.userId },
-    });
-
-    if (!user) {
-      user = await prisma.user.create({
-        data: { id: data.userId, email: '' },
+    if (data.userEmail?.trim()) {
+      await prisma.user.upsert({
+        where: { id: data.userId },
+        update: { email: data.userEmail.trim() },
+        create: { id: data.userId, email: data.userEmail.trim() },
       });
+    } else {
+      const existingUser = await prisma.user.findUnique({
+        where: { id: data.userId },
+      });
+      if (!existingUser) {
+        await prisma.user.create({
+          data: { id: data.userId, email: `${data.userId}@anilsweet.local` },
+        });
+      }
     }
 
     const address = await prisma.address.create({
