@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
 
     // Redirect to the app via deep link. If the app is not installed,
     // show a fallback page with instructions.
-    const deepLink = `aniilsweets://order-success?orderId=${encodeURIComponent(orderId)}`;
+    const deepLink = `anilsweets://order-success?orderId=${encodeURIComponent(orderId)}`;
     return new Response(`<!DOCTYPE html><html><head><meta charset="utf-8"/><title>Return to App</title></head><body style="font-family: sans-serif; text-align: center; padding: 2rem;">
       <h1>Returning to Anil Sweets Corner</h1>
       <p>If you are not redirected automatically, <a href="${deepLink}">tap here to open the app</a>.</p>
