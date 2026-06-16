@@ -64,45 +64,11 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    if (data.userEmail?.trim()) {
-      const trimmedEmail = data.userEmail.trim();
-      // Prevent unique constraint violation: check if email is owned by another user
-      const emailOwner = await prisma.user.findUnique({ where: { email: trimmedEmail } });
-      if (emailOwner && emailOwner.id !== data.userId) {
-        // Email already in use by another user — return conflict to client
-        return NextResponse.json(
-          { error: 'Email already in use by another account' },
-          { status: 409 }
-        );
-      }
-      try {
-        await prisma.user.upsert({
-          where: { id: data.userId },
-          update: { email: trimmedEmail },
-          create: { id: data.userId, email: trimmedEmail },
-        });
-      } catch (e: any) {
-        // Defensive: if a unique constraint slipped through, map to 409
-        if (e?.code === 'P2002') {
-          return NextResponse.json({ error: 'Email already in use' }, { status: 409 });
-        }
-        throw e;
-      }
-    } else {
-      const existingUser = await prisma.user.findUnique({
-        where: { id: data.userId },
-      });
-      if (!existingUser) {
-        await prisma.user.create({
-          data: { id: data.userId, email: `${data.userId}@anilsweet.local` },
-        });
-      }
-    }
-
     const address = await prisma.address.create({
       data: {
         userId: data.userId,
         fullName: data.fullName,
+        email: data.userEmail?.trim(),
         phone: data.phone,
         addressLine1: data.address,
         addressLine2: data.addressLine2,
