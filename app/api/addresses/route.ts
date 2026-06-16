@@ -64,6 +64,16 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    // Ensure user exists in database (required for foreign key)
+    const existingUser = await prisma.user.findUnique({
+      where: { id: data.userId },
+    });
+    if (!existingUser) {
+      await prisma.user.create({
+        data: { id: data.userId, email: data.userEmail?.trim() },
+      });
+    }
+
     const address = await prisma.address.create({
       data: {
         userId: data.userId,
