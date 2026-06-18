@@ -22,7 +22,16 @@ export async function GET(request: NextRequest) {
       orderBy: { createdAt: 'desc' },
     });
 
-    return NextResponse.json({ addresses }, { status: 200 });
+    return NextResponse.json(
+      {
+        addresses: addresses.map((address) => ({
+          ...address,
+          address: address.addressLine1,
+          pincode: address.zipCode,
+        })),
+      },
+      { status: 200 },
+    );
   } catch (err: any) {
     console.error('[ADDRESSES GET] Error:', err);
     return NextResponse.json(
@@ -90,7 +99,16 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    return NextResponse.json({ address }, { status: 201 });
+    return NextResponse.json(
+      {
+        address: {
+          ...address,
+          address: address.addressLine1,
+          pincode: address.zipCode,
+        },
+      },
+      { status: 201 },
+    );
   } catch (err: any) {
     if (err instanceof z.ZodError) {
       return NextResponse.json(
